@@ -91,6 +91,18 @@ python scripts/tasks/run_story.py --model gpt-4.1 --methods direct vs_standard v
 
 For complete experiment instructions with exact commands, parameter settings, and expected outputs, see **[EXPERIMENTS.md](scripts/EXPERIMENTS.md)** which provides 1-to-1 mapping between paper sections and experiment scripts.
 
+### HF Datasets
+We also released the generated datasets in our lab's HF Space. Please check the corresponding README for the exact schema.
+**📦 Full Collection:** https://huggingface.co/collections/CHATS-Lab/verbalized-sampling
+
+| Task | Dataset |
+|------|---------|
+| **Joke Generation**| [🤗 Verbalized-Sampling-Joke-Generation](https://huggingface.co/datasets/CHATS-Lab/Verbalized-Sampling-Joke-Generation) |
+| **Random Number Generation** | [🤗 Verbalized-Sampling-Random-Number-Generator](https://huggingface.co/datasets/CHATS-Lab/Verbalized-Sampling-Random-Number-Generator) | 
+| **Open-Ended QA** | [🤗 Verbalized-Sampling-Open-Ended-QA](https://huggingface.co/datasets/CHATS-Lab/Verbalized-Sampling-Open-Ended-QA) |
+| **Dialogue Simulation** | [🤗 Verbalized-Sampling-Dialogue-Simulation](https://huggingface.co/datasets/CHATS-Lab/Verbalized-Sampling-Dialogue-Simulation) |
+| **Synthetic Data (Math)** | [🤗 Verbalized-Sampling-Synthetic-Data-Generation](https://huggingface.co/datasets/CHATS-Lab/Verbalized-Sampling-Synthetic-Data-Generation) |
+  
 ## Citation
 
 If you use Verbalized Sampling in your research, please cite our paper:
