@@ -34,7 +34,6 @@ class TestCalcKLDivergence(unittest.TestCase):
         result = calc_kl_divergence(gt_data, data)
         self.assertGreater(result, 0)
 
-
     def test_unnormalized_inputs(self):
         """Function should handle unnormalized probability distributions"""
         gt_data = {"Alaska": 0.5, "Rhode Island": 0.5}  # Sum = 1.0
@@ -51,7 +50,6 @@ class TestCalcKLDivergence(unittest.TestCase):
         self.assertAlmostEqual(result, 0.0, places=6)
 
 
-
 class TestCalcKLDivergenceUniform(unittest.TestCase):
     """Test cases for calc_kl_divergence_uniform basic functionality"""
 
@@ -66,6 +64,50 @@ class TestCalcKLDivergenceUniform(unittest.TestCase):
         data = {"Alaska": 0.7, "Rhode Island": 0.1, "California": 0.1, "Texas": 0.1}
         result = calc_kl_divergence_uniform(data)
         self.assertGreater(result, 0)
+
+
+class TestKLDivergenceConsistentVsUniform(unittest.TestCase):
+
+    def test_missing_predictions_on_uniform_gt_with_conventional_call_order(self):
+        """ Make sure calc_kl_divergence is consistent against uniform distribution
+        if ground truth is a uniform distribution,
+        predicted data vs ground truth should match predicted data vs uniform
+        """
+        gt_data = {"Alaska": 0.25, "California": 0.25, "Texas": 0.25, "Rhode Island": 0.25}
+        pred_data = {"California": 0.9, "Texas": 0.1}
+
+        kl_gt = calc_kl_divergence(gt_data, pred_data)
+        kl_uniform = calc_kl_divergence_uniform(pred_data)
+
+        self.assertAlmostEqual(kl_gt, kl_uniform, places=6)
+
+
+    def test_missing_predictions_on_uniform_gt_using_mathematically_correct_call_order(self):
+        """ Make sure calc_kl_divergence is consistent against uniform distribution
+        if ground truth is a uniform distribution,
+        predicted data vs ground truth should match predicted data vs uniform
+        """
+        gt_data = {"Alaska": 0.25, "California": 0.25, "Texas": 0.25, "Rhode Island": 0.25}
+        pred_data = {"California": 0.9, "Texas": 0.1}
+
+        # intentionally reverses conventional call order to match calc_kl_divergence_uniform() ordering
+        kl_gt = calc_kl_divergence(pred_data, gt_data)
+        kl_uniform = calc_kl_divergence_uniform(pred_data)
+
+        self.assertAlmostEqual(kl_gt, kl_uniform, places=6)  # this fails at places=10
+
+    def test_missing_predictions_on_skewed_gt_with_uniform_subset_using_mathematically_correct(self):
+        """ Make sure calc_kl_divergence is consistent against uniform distribution
+        if ground truth is a uniform distribution,
+        predicted data vs ground truth should match predicted data vs uniform
+        """
+        gt_data = {"Alaska": 0.1, "California": 0.4, "Texas": 0.4, "Rhode Island": 0.1}
+        pred_data = {"California": 0.9, "Texas": 0.1}
+
+        kl_gt = calc_kl_divergence(pred_data, gt_data)
+        kl_uniform = calc_kl_divergence_uniform(pred_data)
+
+        self.assertAlmostEqual(kl_gt, kl_uniform, places=6)
 
 
 
