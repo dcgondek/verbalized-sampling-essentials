@@ -1,5 +1,9 @@
+import argparse
 import json
+import logging
 import math
+
+logger = logging.getLogger(__name__)
 
 state_name_abbreviations = {
     "Alabama": "AL",
@@ -112,8 +116,7 @@ def read_data(path):
             result[resp["text"]] = resp["probability"]
             probability_sum += resp["probability"]
     if abs(probability_sum - 1.0) > 1e-8:
-        print(f"Probability sum is not 1.0 for {path}")
-        print(f"Probability sum: {probability_sum}")
+        logger.warning(f"Probability sum: {probability_sum} is not 1.0 for {path}. Re-normalizing.")
         # Manually renormalize so the probabilities sum to 1
         for key in result:
             result[key] = result[key] / probability_sum
@@ -322,13 +325,21 @@ def calc_kl_divergence_vs(gt_data, direct_data, sequence_data, vs_data):
     uniform_sequence_kl = calc_kl_divergence_uniform(sequence_data)
     uniform_vs_kl = calc_kl_divergence_uniform(vs_data)
 
-    print(f"GT vs Direct: {gt_direct_kl}, GT vs Sequence: {gt_sequence_kl}, GT vs VS: {gt_vs_kl}")
-    print(f"Uniform vs Direct: {uniform_direct_kl}, Uniform vs Sequence: {uniform_sequence_kl}, Uniform vs VS: {uniform_vs_kl}")
+    logger.info(f"GT vs Direct: {gt_direct_kl}, GT vs Sequence: {gt_sequence_kl}, GT vs VS: {gt_vs_kl}")
+    logger.info(f"Uniform vs Direct: {uniform_direct_kl}, Uniform vs Sequence: {uniform_sequence_kl}, Uniform vs VS: {uniform_vs_kl}")
     
     # return gt_direct_kl, gt_sequence_kl, gt_vs_kl, uniform_direct_kl, uniform_sequence_kl, uniform_vs_kl
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Calculate KL divergence for state distributions')
+    parser.add_argument('--log-level', default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help='Set the logging level (default: INFO)')
+    args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.log_level))
+
     gt_path = "pre_training_distribution/state_name_distribution.json"
 
 
