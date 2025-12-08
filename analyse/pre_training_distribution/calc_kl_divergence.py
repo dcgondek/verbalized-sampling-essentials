@@ -329,8 +329,8 @@ def calc_kl_divergence_vs(gt_data, direct_data, sequence_data, vs_data):
     uniform_sequence_kl = calc_kl_divergence_uniform(sequence_data)
     uniform_vs_kl = calc_kl_divergence_uniform(vs_data)
 
-    logger.info(f"GT vs Direct: {gt_direct_kl}, GT vs Sequence: {gt_sequence_kl}, GT vs VS: {gt_vs_kl}")
-    logger.info(f"Uniform vs Direct: {uniform_direct_kl}, Uniform vs Sequence: {uniform_sequence_kl}, Uniform vs VS: {uniform_vs_kl}")
+    print(f"GT vs Direct: {gt_direct_kl}, GT vs Sequence: {gt_sequence_kl}, GT vs VS: {gt_vs_kl}")
+    print(f"Uniform vs Direct: {uniform_direct_kl}, Uniform vs Sequence: {uniform_sequence_kl}, Uniform vs VS: {uniform_vs_kl}")
     
     # return gt_direct_kl, gt_sequence_kl, gt_vs_kl, uniform_direct_kl, uniform_sequence_kl, uniform_vs_kl
 
