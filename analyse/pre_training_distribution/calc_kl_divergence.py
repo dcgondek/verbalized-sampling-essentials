@@ -3,6 +3,8 @@ import json
 import logging
 import math
 
+EPSILON = 1e-10
+
 logger = logging.getLogger(__name__)
 
 state_name_abbreviations = {
@@ -66,20 +68,20 @@ def calc_kl_divergence(gt_data, data):
     This version only considers keys present in both gt_data and data,
     and adds a small epsilon to avoid log(0) and renormalizes probabilities.
     """
-    epsilon = 1e-10
+
     # Only use keys present in both gt_data and data
     matched_keys = set(gt_data.keys()) & set(data.keys())
     if not matched_keys:
         return 0.0  # No overlap, KL is 0 by convention
 
-    # Build probability vectors with epsilon smoothing
+    # Build probability vectors with EPSILON smoothing
     p_vec = []
     q_vec = []
     for key in matched_keys:
         p = gt_data.get(key, 0.0)
         q = data.get(key, 0.0)
-        p_vec.append(p + epsilon)
-        q_vec.append(q + epsilon)
+        p_vec.append(p + EPSILON)
+        q_vec.append(q + EPSILON)
     # Renormalize so they sum to 1
     p_sum = sum(p_vec)
     q_sum = sum(q_vec)
@@ -94,16 +96,18 @@ def calc_kl_divergence(gt_data, data):
 
 def calc_kl_divergence_uniform(data):
     """
-    Calculate the KL divergence D_KL(data || uniform)
+    Calculate the KL divergence for uniform reference dist: D_KL(uniform || data)
+    (following definition https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence)
+    This add a small epsilon to avoid log(0) and renormalizes probabilities.
     data is a dict mapping terms to probabilities.
     """
     n = len(data)
     uniform_prob = 1.0 / n
     kl_div = 0.0
     for key in data:
-        p = data[key]
-        if p > 0:
-            kl_div += p * math.log(p / uniform_prob)
+        q = data[key] + EPSILON
+        if q > 0:
+            kl_div += uniform_prob * math.log( uniform_prob / q)
     return kl_div
 
 def read_data(path):
@@ -370,8 +374,8 @@ def main():
                                  sequence_gpt_4_1_data, sequence_claude_4_sonnet_data,
                                  vs_gpt_4_1_data, vs_claude_4_sonnet_data)
 
-    # calc_kl_divergence_vs(gt_data, direct_gpt_4_1_data, sequence_gpt_4_1_data, vs_gpt_4_1_data)
-    # calc_kl_divergence_vs(gt_data, direct_claude_4_sonnet_data, sequence_claude_4_sonnet_data, vs_claude_4_sonnet_data)
+    calc_kl_divergence_vs(gt_data, direct_gpt_4_1_data, sequence_gpt_4_1_data, vs_gpt_4_1_data)
+    calc_kl_divergence_vs(gt_data, direct_claude_4_sonnet_data, sequence_claude_4_sonnet_data, vs_claude_4_sonnet_data)
 
 
 
