@@ -49,6 +49,17 @@ class TestCalcKLDivergence(unittest.TestCase):
         result = calc_kl_divergence(gt_data, data)
         self.assertAlmostEqual(result, 0.0, places=6)
 
+    def test_wiki_basic_calculation(self):
+        """With Wikipedia basic example calculation:
+         https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Basic_example
+         as gold standard:
+        """
+        p = {1: 9.0 / 25, 2: 12.0 / 25, 3: 4. / 25}
+        q = {1: 1 / 3, 2: 1 / 3, 3: 1 / 3}
+        kl_pq= calc_kl_divergence(p,q)
+        kl_qp= calc_kl_divergence(q,p)
+        self.assertAlmostEqual(kl_pq, 0.0852996, places=6)
+        self.assertAlmostEqual(kl_qp, 0.097455, places=6)
 
 class TestCalcKLDivergenceUniform(unittest.TestCase):
     """Test cases for calc_kl_divergence_uniform basic functionality"""
@@ -64,6 +75,15 @@ class TestCalcKLDivergenceUniform(unittest.TestCase):
         data = {"Alaska": 0.7, "Rhode Island": 0.1, "California": 0.1, "Texas": 0.1}
         result = calc_kl_divergence_uniform(data)
         self.assertGreater(result, 0)
+
+    def test_wiki_basic_calculation(self):
+        """With Wikipedia basic example calculation:
+         https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Basic_example
+         as gold standard:
+        """
+        q = {1: 9.0 / 25, 2: 12.0 / 25, 3: 4. / 25}
+        kl = calc_kl_divergence_uniform(q)
+        self.assertAlmostEqual(kl, 0.097455, places=6)
 
 
 class TestKLDivergenceConsistentVsUniform(unittest.TestCase):
