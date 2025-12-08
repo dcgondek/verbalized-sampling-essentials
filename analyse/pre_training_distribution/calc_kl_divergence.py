@@ -97,7 +97,8 @@ def calc_kl_divergence(gt_data, data):
 def calc_kl_divergence_uniform(data):
     """
     Calculate the KL divergence for uniform reference dist: D_KL(uniform || data)
-    (following definition https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence)
+    (following (definition https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+    and use of calc_kl_divergence() where reference distribution is given _first_)
     This add a small epsilon to avoid log(0) and renormalizes probabilities.
     data is a dict mapping terms to probabilities.
     """
