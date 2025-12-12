@@ -30,8 +30,8 @@ This package provides two APIs:
 from .api import select, verbalize
 from .selection import DiscreteDist, Item
 
-# Research API (existing, unchanged)
-from .cli import app as cli_app
+# Research API (existing, unchanged) - lazy load to avoid heavy imports
+# from .cli import app as cli_app
 
 __all__ = [
     # Simple API
@@ -42,5 +42,13 @@ __all__ = [
     # Research API
     "cli_app",
 ]
+
+
+def __getattr__(name):
+    """Lazy load heavy modules to avoid slow imports."""
+    if name == "cli_app":
+        from .cli import app
+        return app
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __version__ = "0.2.0"
