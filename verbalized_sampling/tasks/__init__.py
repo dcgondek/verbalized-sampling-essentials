@@ -29,7 +29,7 @@ from .creativity.speech import SpeechTask
 from .creativity.story import CreativeStoryTask
 from .dialogue.persuasion import PersuasionTask
 from .fact.simple_qa import SimpleQATask
-from .math.math_task import MathTask
+# Lazy load to avoid importing datasets/torch: from .math.math_task import MathTask
 from .safety.safety import SafetyTask
 from .synthetic_data.amc_aime import AMCAndAIMEMathTask
 from .synthetic_data.gsm8k import GSM8KTask
@@ -183,6 +183,12 @@ class Task(str, Enum):
     """
 
 
+def _get_math_task(dataset: str, **kwargs):
+    """Lazy-load MathTask to avoid importing datasets/torch at module level."""
+    from .math.math_task import MathTask
+    return MathTask(dataset=dataset, **kwargs)
+
+
 TASK_REGISTRY: Dict[str, Type[BaseTask]] = {
     # creativity
     "creative_story": CreativeStoryTask,
@@ -202,12 +208,12 @@ TASK_REGISTRY: Dict[str, Type[BaseTask]] = {
     "synthetic_negative": SyntheticNegativeTask,
     # safety
     "safety": SafetyTask,
-    # math
-    "math_math": lambda **kwargs: MathTask(dataset="math", **kwargs),
-    "math_aime": lambda **kwargs: MathTask(dataset="aime", **kwargs),
-    "math_amc": lambda **kwargs: MathTask(dataset="amc", **kwargs),
-    "math_minerva": lambda **kwargs: MathTask(dataset="minerva", **kwargs),
-    "math_olympiad_bench": lambda **kwargs: MathTask(dataset="olympiad_bench", **kwargs),
+    # math (lazy-loaded)
+    "math_math": lambda **kwargs: _get_math_task("math", **kwargs),
+    "math_aime": lambda **kwargs: _get_math_task("aime", **kwargs),
+    "math_amc": lambda **kwargs: _get_math_task("amc", **kwargs),
+    "math_minerva": lambda **kwargs: _get_math_task("minerva", **kwargs),
+    "math_olympiad_bench": lambda **kwargs: _get_math_task("olympiad_bench", **kwargs),
     # dialogue
     "persuasion_dialogue": PersuasionTask,
 }
