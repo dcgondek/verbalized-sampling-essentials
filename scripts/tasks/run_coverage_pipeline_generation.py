@@ -1,5 +1,6 @@
 # minimal_generation.py
 # Generation-only script following the same pattern as scripts/tasks/run_state_name.py
+import argparse
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -66,6 +67,7 @@ def run_generation_tests(
     output_dir: str,
     num_workers: int = 16,
     custom_prompts: List[str] = None,
+    clobber: bool = False,
 ) -> Dict[str, Path]:
     """Run GENERATION ONLY for specific method variations.
 
@@ -98,7 +100,7 @@ def run_generation_tests(
         experiments=experiments,
         evaluation=EvaluationConfig(metrics=[]),  # Empty - no evaluation
         output_base_dir=output_path,
-        skip_existing=True,
+        skip_existing=not clobber,
         num_workers=num_workers,
     )
 
@@ -115,6 +117,18 @@ def run_generation_tests(
 
 
 if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Run generation tests for verbalized sampling methods"
+    )
+    parser.add_argument(
+        "--clobber",
+        action="store_true",
+        default=False,
+        help="Overwrite existing output files (default: skip existing files)"
+    )
+    args = parser.parse_args()
+
     # Configuration section - matches pattern from run_state_name.py:95-159
 
     # Define which methods to test (run_state_name.py:99-136)
@@ -173,6 +187,7 @@ if __name__ == "__main__":
             output_dir="generation_results",
             num_workers=16 if any(x in model_basename for x in ["claude", "gemini"]) else 32,
             custom_prompts=custom_prompts,
+            clobber=args.clobber,
         )
 
     print(f"\n{'='*60}")
