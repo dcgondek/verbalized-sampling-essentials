@@ -1,4 +1,17 @@
 
+This is a fork of `verbalized-sampling` to encapsulate one 'essential' view of functionality for core verbalized sampling prompting
+as well as an easily-reproducible subset of the experiments and analysis as discussed in the paper "Verbalized Sampling: How to Mitigate Mode Collapse and Unlock LLM Diversity" by Jiayi Zhang, Simon Yu, Derek Chong, Anthony Sicilia, Michael R. Tomz, Christopher D. Manning and Weiyan Shi.
+
+
+### Efficiencies:
+  - Segment out Pipeline phases e.g. to allow generation without evalution
+  - Lazy load heavyweight imports (like torch, transformers, etc.)
+
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
 
 <div align="center">
 <h1>Verbalized Sampling: How to Mitigate Mode Collapse and Unlock LLM Diversity</h1>
