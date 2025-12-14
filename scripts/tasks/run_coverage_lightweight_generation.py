@@ -21,6 +21,7 @@ console = Console()
 
 def run_generation_test(
     task: Task,
+    num_responses: int,
     model_name: str,
     method: Dict[str, Any],
     temperature: float,
@@ -51,6 +52,7 @@ def run_generation_test(
         task=task,
         model_name=model_name,
         temperature=temperature,
+        num_responses= 40,
         top_p=top_p,
         custom_prompts=custom_prompts
     )
@@ -225,7 +227,7 @@ if __name__ == "__main__":
     for i, model in enumerate(models, 1):
         print(f"\n[Model {i}/{len(models)}] {model}")
         model_basename = model.replace("/", "_")
-        run_generation_test(task=Task.STATE_NAME, model_name=model, method=method, temperature=0.7,
+        run_generation_test(task=Task.STATE_NAME, num_responses=35, model_name=model, method=method, temperature=0.7,
                             top_p=1.0, output_dir="generation_results", num_workers=16 if any(
                 x in model_basename for x in ["claude", "gemini"]) else 32,
                             custom_prompts=custom_prompts, clobber=args.clobber)
