@@ -8,57 +8,13 @@ from typing import Any, Dict, List
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
-from verbalized_sampling.lightweight_experiment_config import LightweightExperimentConfig
+from verbalized_sampling.lightweight_experiment_config import create_method_experiments
 # Direct imports - with lazy loading in verbalized_sampling/__init__.py, these no longer trigger heavy imports
 from verbalized_sampling.llms import get_model
 from verbalized_sampling.methods import Method
 from verbalized_sampling.tasks import Task, get_task
 
 console = Console()
-
-
-def create_method_experiments(
-    task: Task,
-    model_name: str,
-    temperature: float,
-    top_p: float,
-    methods: List[Dict[str, Any]],
-    custom_prompts: List[str] = None,
-) -> List[LightweightExperimentConfig]:
-    """Create experiments for testing specific method variations.
-
-    Mirrors create_method_experiments() from run_state_name.py:28-60
-    """
-
-    # Base configuration
-    base = {
-        "task": task,
-        "model_name": model_name,
-        "num_responses": 500,
-        "num_prompts": 1,
-        "target_words": 0,
-        "temperature": temperature,
-        "top_p": top_p,
-        "random_seed": 42,
-    }
-
-    # Add custom_prompts to base if provided
-    if custom_prompts is not None:
-        base["custom_prompts"] = custom_prompts
-        print(f"📝 Using custom prompt: {custom_prompts[0][:80]}...")
-
-    experiments = []
-    for method_config in methods:
-        # Create name (same pattern as run_state_name.py:52-56)
-        name = f"{method_config['method'].value}"
-        if method_config.get("strict_json"):
-            name += " [strict]"
-        if method_config.get("num_samples"):
-            name += f" (samples={method_config['num_samples']})"
-
-        experiments.append(LightweightExperimentConfig(name=name, **base, **method_config))
-
-    return experiments
 
 
 def run_generation_tests(
@@ -118,80 +74,81 @@ def run_generation_tests(
             "Generating responses...", total=len(experiments)
         )
 
-        for exp_config in experiments:
-            # Setup output path
-            exp_dir = output_path / "generation" / exp_config.name
-            exp_dir.mkdir(parents=True, exist_ok=True)
-            output_file = exp_dir / "responses.jsonl"
+        exp_config = experiments[0]
 
-            if output_file.exists() and not clobber:
-                console.print(f"⏭️  Skipping {exp_config.name} (already exists) in {output_file}")
-                generation_results[exp_config.name] = output_file
-                progress.advance(overall_task)
-                continue
+        # Setup output path
+        exp_dir = output_path / "generation" / exp_config.name
+        exp_dir.mkdir(parents=True, exist_ok=True)
+        output_file = exp_dir / "responses.jsonl"
 
-            progress.console.print(f"🔄 Generating: {exp_config.name}")
-
-            # Setup model
-            model_config = {
-                "temperature": exp_config.temperature,
-                "top_p": exp_config.top_p,
-            }
-
-            if exp_config.use_vllm:
-                model_config["min_p"] = exp_config.min_p
-
-            model = get_model(
-                model_name=exp_config.model_name,
-                method=exp_config.method,
-                config=model_config,
-                use_vllm=exp_config.use_vllm,
-                num_workers=num_workers,
-                strict_json=exp_config.strict_json,
-            )
-
-            # Setup task
-            task_kwargs = {
-                "num_prompts": exp_config.num_prompts,
-                "random_seed": exp_config.random_seed,
-                "all_possible": exp_config.all_possible,
-                "num_samples_per_prompt": (
-                    exp_config.num_samples_per_prompt
-                    if exp_config.method == Method.VS_MULTI
-                    else None
-                ),
-            }
-
-            num_samples = exp_config.num_samples if exp_config.method != Method.DIRECT else 1
-            num_responses = exp_config.num_responses // num_samples
-            print(f"Seeking {num_responses} responses")
-            task_instance = get_task(
-                exp_config.task,
-                model=model,
-                method=exp_config.method,
-                num_responses=num_responses,
-                num_samples=num_samples,
-                target_words=exp_config.target_words,
-                probability_definition=exp_config.probability_definition,
-                probability_tuning=exp_config.probability_tuning,
-                custom_prompts=exp_config.custom_prompts,
-                **task_kwargs,
-            )
-            print(f"Still Seeking {num_responses} responses")
-            # Run generation
-            gen_task = progress.add_task(
-                f"[cyan]{exp_config.name}[/cyan]", total=exp_config.num_responses
-            )
-            results = task_instance.run(progress=progress, task_id=gen_task)
-            task_instance.save_results(results, output_file)
-
+        if output_file.exists() and not clobber:
+            console.print(f"⏭️  Skipping {exp_config.name} (already exists) in {output_file}")
             generation_results[exp_config.name] = output_file
-            progress.remove_task(gen_task)
             progress.advance(overall_task)
+            return
 
-            console.print(f"✅ {exp_config.name}: {len(results)} responses saved")
+        progress.console.print(f"🔄 Generating: {exp_config.name}")
 
-    print(f"\n✅ Generation complete! Results saved to:")
+        # Setup model
+        model_config = {
+            "temperature": exp_config.temperature,
+            "top_p": exp_config.top_p,
+        }
+
+        if exp_config.use_vllm:
+            model_config["min_p"] = exp_config.min_p
+
+        model = get_model(
+            model_name=exp_config.model_name,
+            method=exp_config.method,
+            config=model_config,
+            use_vllm=exp_config.use_vllm,
+            num_workers=num_workers,
+            strict_json=exp_config.strict_json,
+        )
+
+        # Setup task
+        task_kwargs = {
+            "num_prompts": exp_config.num_prompts,
+            "random_seed": exp_config.random_seed,
+            "all_possible": exp_config.all_possible,
+            "num_samples_per_prompt": (
+                exp_config.num_samples_per_prompt
+                if exp_config.method == Method.VS_MULTI
+                else None
+            ),
+        }
+
+        num_samples = exp_config.num_samples if exp_config.method != Method.DIRECT else 1
+        num_responses = exp_config.num_responses // num_samples
+        print(f"Seeking {num_responses} responses")
+        task_instance = get_task(
+            exp_config.task,
+            model=model,
+            method=exp_config.method,
+            num_responses=num_responses,
+            num_samples=num_samples,
+            target_words=exp_config.target_words,
+            probability_definition=exp_config.probability_definition,
+            probability_tuning=exp_config.probability_tuning,
+            custom_prompts=exp_config.custom_prompts,
+            **task_kwargs,
+        )
+        print(f"Still Seeking {num_responses} responses")
+        # Run generation
+        gen_task = progress.add_task(
+            f"[cyan]{exp_config.name}[/cyan]", total=exp_config.num_responses
+        )
+        results = task_instance.run(progress=progress, task_id=gen_task)
+        task_instance.save_results(results, output_file)
+
+        generation_results[exp_config.name] = output_file
+        progress.remove_task(gen_task)
+        progress.advance(overall_task)
+
+        console.print(f"✅ {exp_config.name}: {len(results)} responses saved")
+
+    print(f"\n✅ Generation complete! Results (sample: {results[0]['responses'][0:3]}) saved to:")
     print(f"   {output_path}/generation/\n")
 
     return generation_results

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from verbalized_sampling.methods import Method
 from verbalized_sampling.tasks import Task
@@ -27,3 +27,47 @@ class LightweightExperimentConfig:
     probability_definition: str = "implicit"
     probability_tuning: float = -1
     custom_prompts: Optional[List[str]] = None
+
+
+def create_method_experiments(
+    task: Task,
+    model_name: str,
+    temperature: float,
+    top_p: float,
+    methods: List[Dict[str, Any]],
+    custom_prompts: List[str] = None,
+) -> List[LightweightExperimentConfig]:
+    """Create experiments for testing specific method variations.
+
+    Mirrors create_method_experiments() from run_state_name.py:28-60
+    """
+
+    # Base configuration
+    base = {
+        "task": task,
+        "model_name": model_name,
+        "num_responses": 20,
+        "num_prompts": 1,
+        "target_words": 0,
+        "temperature": temperature,
+        "top_p": top_p,
+        "random_seed": 42,
+    }
+
+    # Add custom_prompts to base if provided
+    if custom_prompts is not None:
+        base["custom_prompts"] = custom_prompts
+        print(f"📝 Using custom prompt: {custom_prompts[0][:80]}...")
+
+    experiments = []
+    for method_config in methods:
+        # Create name (same pattern as run_state_name.py:52-56)
+        name = f"{method_config['method'].value}"
+        if method_config.get("strict_json"):
+            name += " [strict]"
+        if method_config.get("num_samples"):
+            name += f" (samples={method_config['num_samples']})"
+
+        experiments.append(LightweightExperimentConfig(name=name, **base, **method_config))
+
+    return experiments
