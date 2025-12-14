@@ -19,6 +19,28 @@ from verbalized_sampling.tasks import Task, get_task, BaseTask
 console = Console()
 
 
+def run_core_generation(
+        task: Task,
+        num_responses: int,
+        model_name: str,
+        method: Dict[str, Any],
+        temperature: float,
+        top_p: float,
+        num_workers: int = 16,
+        custom_prompts: List[str] = None,
+    ):
+    experiment = LightweightExperimentConfig.from_method_config(
+        method_config=method,
+        task=task,
+        model_name=model_name,
+        temperature=temperature,
+        num_responses= 40,
+        top_p=top_p,
+        custom_prompts=custom_prompts
+    )
+    results, task_instance = run_task(experiment, num_workers)
+    return results
+
 def run_generation_test(
     task: Task,
     num_responses: int,
@@ -85,8 +107,6 @@ def run_generation_test(
             progress.advance(overall_task)
             return
 
-        progress.console.print(f"🔄 Generating: {experiment.name}")
-
         results, task_instance = run_task(experiment, num_workers, overall_task, progress)
 
         task_instance.save_results(results, output_file)
@@ -101,8 +121,8 @@ def run_generation_test(
     return generation_results
 
 
-def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_task: TaskID,
-             progress: Progress) -> tuple[BaseTask, list[Any]]:
+def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_task: TaskID = None,
+             progress: Progress = None) -> tuple[BaseTask, list[Any]]:
     # Setup model
     model_config = {
         "temperature": experiment.temperature,
@@ -149,13 +169,19 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_
         **task_kwargs,
     )
     # Run generation
-    gen_task = progress.add_task(
-        f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses
-    )
+    if progress:
+        gen_task = progress.add_task(
+            f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses
+        )
+    else:
+        gen_task = None
+
     results = task_instance.run(progress=progress, task_id=gen_task)
 
-    progress.remove_task(gen_task)
-    progress.advance(overall_task)
+    if progress:
+        progress.remove_task(gen_task)
+        progress.advance(overall_task)
+
     return results, task_instance
 
 
@@ -166,6 +192,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--clobber",
+        action="store_true",
+        default=False,
+        help="Overwrite existing output files (default: skip existing files)"
+    )
+    parser.add_argument(
+        "--lightlight",
         action="store_true",
         default=False,
         help="Overwrite existing output files (default: skip existing files)"
@@ -227,10 +259,22 @@ if __name__ == "__main__":
     for i, model in enumerate(models, 1):
         print(f"\n[Model {i}/{len(models)}] {model}")
         model_basename = model.replace("/", "_")
-        run_generation_test(task=Task.STATE_NAME, num_responses=35, model_name=model, method=method, temperature=0.7,
-                            top_p=1.0, output_dir="generation_results", num_workers=16 if any(
-                x in model_basename for x in ["claude", "gemini"]) else 32,
-                            custom_prompts=custom_prompts, clobber=args.clobber)
+
+        if args.lightlight:
+            results = run_core_generation(
+                task=Task.STATE_NAME, num_responses=40, model_name=model, method=method, temperature=0.7, top_p=1.0,
+                num_workers=16 if any(x in model_basename for x in ["claude", "gemini"]) else 32,
+                custom_prompts=custom_prompts
+            )
+            print(
+                f"\n✅ Generation complete! Results (sample: {results[0]['responses'][0:3]})")
+        else:
+            run_generation_test(task=Task.STATE_NAME, num_responses=35, model_name=model, method=method, temperature=0.7,
+                                top_p=1.0, output_dir="generation_results", num_workers=16 if any(
+                    x in model_basename for x in ["claude", "gemini"]) else 32,
+                                custom_prompts=custom_prompts, clobber=args.clobber)
+
+
 
     print(f"\n{'='*60}")
     print(f"🎉 All generation runs complete!")
