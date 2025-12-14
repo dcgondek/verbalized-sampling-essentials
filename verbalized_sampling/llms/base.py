@@ -93,7 +93,7 @@ class BaseLLM(ABC):
                         pbar.set_postfix({"completed": f"#{index}"})
                     except Exception as e:
                         pbar.write(f"Error processing message {index}: {e}")
-                        results[index] = None
+                        results[index] = None # TODO (dcg): this swallows failures and will affect sample consistency
                     pbar.update(1)
 
             return results
