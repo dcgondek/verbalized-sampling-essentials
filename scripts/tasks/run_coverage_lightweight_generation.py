@@ -12,7 +12,7 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 from verbalized_sampling.lightweight_experiment_config import create_method_experiments, \
     LightweightExperimentConfig
 # Direct imports - with lazy loading in verbalized_sampling/__init__.py, these no longer trigger heavy imports
-from verbalized_sampling.llms import get_model
+from verbalized_sampling.llms import get_model, BaseLLM
 from verbalized_sampling.methods import Method
 from verbalized_sampling.tasks import Task, get_task, BaseTask
 
@@ -141,6 +141,26 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_
         strict_json=experiment.strict_json,
     )
 
+
+    task_instance = initialize_task(experiment, model)
+    # Run generation
+    if progress:
+        gen_task = progress.add_task(
+            f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses
+        )
+    else:
+        gen_task = None
+
+    results = task_instance.run(progress=progress, task_id=gen_task)
+
+    if progress:
+        progress.remove_task(gen_task)
+        progress.advance(overall_task)
+
+    return results, task_instance
+
+
+def initialize_task(experiment: LightweightExperimentConfig, model: BaseLLM) -> BaseTask:
     # Setup task
     task_kwargs = {
         "num_prompts": experiment.num_prompts,
@@ -168,21 +188,7 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_
         custom_prompts=experiment.custom_prompts,
         **task_kwargs,
     )
-    # Run generation
-    if progress:
-        gen_task = progress.add_task(
-            f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses
-        )
-    else:
-        gen_task = None
-
-    results = task_instance.run(progress=progress, task_id=gen_task)
-
-    if progress:
-        progress.remove_task(gen_task)
-        progress.advance(overall_task)
-
-    return results, task_instance
+    return task_instance
 
 
 if __name__ == "__main__":
