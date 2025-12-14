@@ -34,7 +34,8 @@ class LightweightExperimentConfig:
         method_config: Dict[str, Any],
         **base_kwargs
     ) -> "LightweightExperimentConfig":
-        """Create experiment config from method configuration and base parameters.
+        """Create experiment config from method configuration and base parameters.  Implemented
+        as factory method to handle `method_config` messiness vs dataclass constructor parameters
 
         Args:
             method_config: Dictionary containing method-specific configuration including 'method' key
@@ -59,6 +60,7 @@ class LightweightExperimentConfig:
 
         return cls(**all_kwargs)
 
+# deprecated for factory method above: from_method_config()
 def create_method_experiments(
     task: Task,
     model_name: str,
