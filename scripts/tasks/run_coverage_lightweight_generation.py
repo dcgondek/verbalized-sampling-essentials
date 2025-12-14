@@ -121,8 +121,30 @@ def run_generation_test(
     return generation_results
 
 
-def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_task: TaskID = None,
+def run_task(experiment: LightweightExperimentConfig, num_workers: int,
+             overall_task: TaskID = None,  # Progress bar stuff
              progress: Progress = None) -> tuple[BaseTask, list[Any]]:
+
+    model = initialize_model(experiment, num_workers)
+    task_instance = initialize_task(experiment, model)
+
+
+    if progress: # Set up granular progress bar
+        gen_task = progress.add_task(f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses)
+    else:
+        gen_task = None
+
+    # Run generation
+    results = task_instance.run(progress=progress, task_id=gen_task)
+
+    if progress:
+        progress.remove_task(gen_task)
+        progress.advance(overall_task)
+
+    return results, task_instance
+
+
+def initialize_model(experiment: LightweightExperimentConfig, num_workers: int) -> BaseLLM:
     # Setup model
     model_config = {
         "temperature": experiment.temperature,
@@ -132,7 +154,7 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_
     if experiment.use_vllm:
         model_config["min_p"] = experiment.min_p
 
-    model = get_model(
+    return get_model(
         model_name=experiment.model_name,
         method=experiment.method,
         config=model_config,
@@ -140,24 +162,6 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int, overall_
         num_workers=num_workers,
         strict_json=experiment.strict_json,
     )
-
-
-    task_instance = initialize_task(experiment, model)
-    # Run generation
-    if progress:
-        gen_task = progress.add_task(
-            f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses
-        )
-    else:
-        gen_task = None
-
-    results = task_instance.run(progress=progress, task_id=gen_task)
-
-    if progress:
-        progress.remove_task(gen_task)
-        progress.advance(overall_task)
-
-    return results, task_instance
 
 
 def initialize_task(experiment: LightweightExperimentConfig, model: BaseLLM) -> BaseTask:
