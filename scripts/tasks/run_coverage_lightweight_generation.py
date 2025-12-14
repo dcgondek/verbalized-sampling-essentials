@@ -125,9 +125,7 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int,
              overall_task: TaskID = None,  # Progress bar stuff
              progress: Progress = None) -> tuple[BaseTask, list[Any]]:
 
-    model = initialize_model(experiment, num_workers)
-    task_instance = initialize_task(experiment, model)
-
+    task_instance = initialize_task(experiment, initialize_model(experiment, num_workers))
 
     if progress: # Set up granular progress bar
         gen_task = progress.add_task(f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses)
