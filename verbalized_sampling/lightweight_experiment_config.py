@@ -19,7 +19,7 @@ class LightweightExperimentConfig:
     num_samples: int = 3
     num_prompts: int = 1
     num_samples_per_prompt: int = 5
-    target_words: int = 200
+    target_words: int = 0
     random_seed: int = 42
     use_vllm: bool = False
     all_possible: bool = False
@@ -28,6 +28,41 @@ class LightweightExperimentConfig:
     probability_tuning: float = -1
     custom_prompts: Optional[List[str]] = None
 
+def configure_method_experiment(
+    task: Task,
+    model_name: str,
+    temperature: float,
+    top_p: float,
+    method: Dict[str, Any],
+    custom_prompts: List[str] = None,
+) -> LightweightExperimentConfig:
+    """Create experiments for testing specific method variations.
+
+    Mirrors create_method_experiments() from run_state_name.py:28-60
+    """
+
+    # Base configuration
+    base = {
+        "task": task,
+        "model_name": model_name,
+        "temperature": temperature,
+    }
+
+    # Add custom_prompts to base if provided
+    if custom_prompts is not None:
+        base["custom_prompts"] = custom_prompts
+        print(f"📝 Using custom prompt: {custom_prompts[0][:80]}...")
+
+    method_config = method
+
+    # Create name (same pattern as run_state_name.py:52-56)
+    name = f"{method_config['method'].value}"
+    if method_config.get("strict_json"):
+        name += " [strict]"
+    if method_config.get("num_samples"):
+        name += f" (samples={method_config['num_samples']})"
+
+    return LightweightExperimentConfig(name=name, **base, **method_config)
 
 def create_method_experiments(
     task: Task,
