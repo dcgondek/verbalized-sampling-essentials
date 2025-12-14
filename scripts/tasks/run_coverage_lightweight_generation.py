@@ -2,43 +2,19 @@
 # Generation-only script following the same pattern as scripts/tasks/run_state_name.py
 # FAST VERSION: Bypasses Pipeline to avoid heavy imports (torch, transformers, etc.)
 import argparse
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
+from verbalized_sampling.lightweight_experiment_config import LightweightExperimentConfig
 # Direct imports - with lazy loading in verbalized_sampling/__init__.py, these no longer trigger heavy imports
 from verbalized_sampling.llms import get_model
 from verbalized_sampling.methods import Method
 from verbalized_sampling.tasks import Task, get_task
 
 console = Console()
-
-
-@dataclass
-class ExperimentConfig:
-    """Configuration for a single experiment (minimal version)."""
-    name: str
-    task: Task
-    method: Method
-    model_name: str
-    temperature: float = 0.7
-    top_p: float = 0.9
-    min_p: float = 0.0
-    num_responses: int = 10
-    num_samples: int = 1
-    num_prompts: int = 5
-    num_samples_per_prompt: int = 2
-    target_words: int = 200
-    random_seed: int = 42
-    use_vllm: bool = False
-    all_possible: bool = False
-    strict_json: bool = False
-    probability_definition: str = "implicit"
-    probability_tuning: float = -1
-    custom_prompts: Optional[List[str]] = None
 
 
 def create_method_experiments(
@@ -48,7 +24,7 @@ def create_method_experiments(
     top_p: float,
     methods: List[Dict[str, Any]],
     custom_prompts: List[str] = None,
-) -> List[ExperimentConfig]:
+) -> List[LightweightExperimentConfig]:
     """Create experiments for testing specific method variations.
 
     Mirrors create_method_experiments() from run_state_name.py:28-60
@@ -80,7 +56,7 @@ def create_method_experiments(
         if method_config.get("num_samples"):
             name += f" (samples={method_config['num_samples']})"
 
-        experiments.append(ExperimentConfig(name=name, **base, **method_config))
+        experiments.append(LightweightExperimentConfig(name=name, **base, **method_config))
 
     return experiments
 
@@ -120,7 +96,7 @@ def run_generation_tests(
         print(f"  {i}. {exp.name}")
 
     model_basename = model_name.replace("/", "_")
-    output_path = Path(f"{output_dir}/{model_basename}_{task.value}")
+    output_path = Path(f"{output_dir}/lw-{model_basename}_{task.value}")
 
     print(f"\n📁 Output directory: {output_path}")
     print(f"⚙️  Workers: {num_workers}")
@@ -188,7 +164,7 @@ def run_generation_tests(
 
             num_samples = exp_config.num_samples if exp_config.method != Method.DIRECT else 1
             num_responses = exp_config.num_responses // num_samples
-
+            print(f"Seeking {num_responses} responses")
             task_instance = get_task(
                 exp_config.task,
                 model=model,
@@ -201,7 +177,7 @@ def run_generation_tests(
                 custom_prompts=exp_config.custom_prompts,
                 **task_kwargs,
             )
-
+            print(f"Still Seeking {num_responses} responses")
             # Run generation
             gen_task = progress.add_task(
                 f"[cyan]{exp_config.name}[/cyan]", total=exp_config.num_responses
@@ -238,11 +214,11 @@ if __name__ == "__main__":
 
     # Define which methods to test (run_state_name.py:99-136)
     methods = [
-        {
-            "method": Method.DIRECT,
-            "strict_json": False,
-            "num_samples": 1,
-        },
+        # {
+        #     "method": Method.DIRECT,
+        #     "strict_json": False,
+        #     "num_samples": 1,
+        # },
         {
             'method': Method.VS_STANDARD,
             'strict_json': True,
