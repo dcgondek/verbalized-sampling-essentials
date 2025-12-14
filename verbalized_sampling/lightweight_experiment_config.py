@@ -28,41 +28,36 @@ class LightweightExperimentConfig:
     probability_tuning: float = -1
     custom_prompts: Optional[List[str]] = None
 
-def configure_method_experiment(
-    task: Task,
-    model_name: str,
-    temperature: float,
-    top_p: float,
-    method: Dict[str, Any],
-    custom_prompts: List[str] = None,
-) -> LightweightExperimentConfig:
-    """Create experiments for testing specific method variations.
+    @classmethod
+    def from_method_config(
+        cls,
+        method_config: Dict[str, Any],
+        **base_kwargs
+    ) -> "LightweightExperimentConfig":
+        """Create experiment config from method configuration and base parameters.
 
-    Mirrors create_method_experiments() from run_state_name.py:28-60
-    """
+        Args:
+            method_config: Dictionary containing method-specific configuration including 'method' key
+            **base_kwargs: Base configuration parameters (task, model_name, temperature, etc.)
 
-    # Base configuration
-    base = {
-        "task": task,
-        "model_name": model_name,
-        "temperature": temperature,
-    }
+        Returns:
+            LightweightExperimentConfig instance with auto-generated name
+        """
+        # Generate experiment name from method config
+        name = f"{method_config['method'].value}"
+        if method_config.get("strict_json"):
+            name += " [strict]"
+        if method_config.get("num_samples"):
+            name += f" (samples={method_config['num_samples']})"
 
-    # Add custom_prompts to base if provided
-    if custom_prompts is not None:
-        base["custom_prompts"] = custom_prompts
-        print(f"📝 Using custom prompt: {custom_prompts[0][:80]}...")
+        # Handle custom_prompts logging
+        if "custom_prompts" in base_kwargs and base_kwargs["custom_prompts"] is not None:
+            print(f"📝 Using custom prompt: {base_kwargs['custom_prompts'][0][:80]}...")
 
-    method_config = method
+        # Merge base kwargs and method config, with method config taking precedence
+        all_kwargs = {**base_kwargs, **method_config, "name": name}
 
-    # Create name (same pattern as run_state_name.py:52-56)
-    name = f"{method_config['method'].value}"
-    if method_config.get("strict_json"):
-        name += " [strict]"
-    if method_config.get("num_samples"):
-        name += f" (samples={method_config['num_samples']})"
-
-    return LightweightExperimentConfig(name=name, **base, **method_config)
+        return cls(**all_kwargs)
 
 def create_method_experiments(
     task: Task,

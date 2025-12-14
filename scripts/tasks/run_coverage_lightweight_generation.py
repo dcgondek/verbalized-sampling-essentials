@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn, TaskID
 
 from verbalized_sampling.lightweight_experiment_config import create_method_experiments, \
-    configure_method_experiment, LightweightExperimentConfig
+    LightweightExperimentConfig
 # Direct imports - with lazy loading in verbalized_sampling/__init__.py, these no longer trigger heavy imports
 from verbalized_sampling.llms import get_model
 from verbalized_sampling.methods import Method
@@ -46,8 +46,13 @@ def run_generation_test(
     print("="*60)
 
     # Experiment Config
-    experiment = configure_method_experiment(
-        task, model_name, temperature, top_p, method, custom_prompts
+    experiment = LightweightExperimentConfig.from_method_config(
+        method_config=method,
+        task=task,
+        model_name=model_name,
+        temperature=temperature,
+        top_p=top_p,
+        custom_prompts=custom_prompts
     )
     print(f"\n📊 {experiment.name} experiment configured:")
     model_basename = model_name.replace("/", "_")
