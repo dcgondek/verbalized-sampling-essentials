@@ -127,7 +127,7 @@ def run_task(experiment: LightweightExperimentConfig, num_workers: int,
     task_instance = initialize_task(experiment, initialize_model(experiment, num_workers))
 
     if progress: # Set up granular progress bar
-        gen_task = progress.add_task(f"[cyan]{experiment.name}[/cyan]", total=experiment.num_responses)
+        gen_task = progress.add_task(f"[cyan]{experiment.name}[/cyan]", total=experiment.num_desired_samples)
     else:
         gen_task = None
 
@@ -174,16 +174,16 @@ def initialize_task(experiment: LightweightExperimentConfig, model: BaseLLM) -> 
         ),
     }
 
-    num_samples = experiment.num_samples if experiment.method != Method.DIRECT else 1
-    num_responses = math.ceil(experiment.num_responses / num_samples)
-    print(f"{experiment.name} experiment has {experiment.num_responses}/{num_samples} = {num_responses} responses")
+    num_samples_per_prompt = experiment.num_samples if experiment.method != Method.DIRECT else 1
+    num_responses = math.ceil(experiment.num_desired_samples / num_samples_per_prompt)
+    print(f"{experiment.name} experiment targeting: {experiment.num_desired_samples} desired / {num_samples_per_prompt} per prompt = {num_responses} responses")
 
     task_instance = get_task(
         experiment.task,
         model=model,
         method=experiment.method,
         num_responses=num_responses,
-        num_samples=num_samples,
+        num_samples=num_samples_per_prompt,
         target_words=experiment.target_words,
         probability_definition=experiment.probability_definition,
         probability_tuning=experiment.probability_tuning,
