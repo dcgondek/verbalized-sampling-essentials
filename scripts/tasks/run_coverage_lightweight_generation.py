@@ -33,7 +33,7 @@ def run_core_generation(
         task=task,
         model_name=model_name,
         temperature=temperature,
-        num_responses= 40,
+        num_responses= num_responses,
         top_p=top_p,
         custom_prompts=custom_prompts
     )
@@ -176,6 +176,7 @@ def initialize_task(experiment: LightweightExperimentConfig, model: BaseLLM) -> 
 
     num_samples = experiment.num_samples if experiment.method != Method.DIRECT else 1
     num_responses = math.ceil(experiment.num_responses / num_samples)
+    print(f"{experiment.name} experiment has {experiment.num_responses}/{num_samples} = {num_responses} responses")
 
     task_instance = get_task(
         experiment.task,
