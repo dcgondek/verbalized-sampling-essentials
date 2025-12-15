@@ -348,7 +348,7 @@ class PromptFactory:
         """
         return [user_prompts]
 
-    @staticmethod
+    @staticmethodr
     def get_amc_and_aime_math_task_prompts(num_icl_example: int, random_seed: int) -> List[str]:
         """Get prompts for the AMC and AIME math task."""
         user_prompt = """Generate a math competition problem in the style of AMC 10, AMC 12, or AIME.
