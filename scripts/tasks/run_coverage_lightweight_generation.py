@@ -9,8 +9,7 @@ from typing import Any, Dict, List
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn, TaskID
 
-from verbalized_sampling.lightweight_experiment_config import create_method_experiments, \
-    LightweightExperimentConfig
+from verbalized_sampling.lightweight_experiment_config import LightweightExperimentConfig
 # Direct imports - with lazy loading in verbalized_sampling/__init__.py, these no longer trigger heavy imports
 from verbalized_sampling.llms import get_model, BaseLLM
 from verbalized_sampling.methods import Method
@@ -105,7 +104,7 @@ def run_generation_test(
             console.print(f"⏭️  Skipping {experiment.name} (already exists) in {output_file}")
             generation_results[experiment.name] = output_file
             progress.advance(overall_task)
-            return
+            return None
 
         results, task_instance = run_task(experiment, num_workers, overall_task, progress)
 
@@ -123,7 +122,7 @@ def run_generation_test(
 
 def run_task(experiment: LightweightExperimentConfig, num_workers: int,
              overall_task: TaskID = None,  # Progress bar stuff
-             progress: Progress = None) -> tuple[BaseTask, list[Any]]:
+             progress: Progress = None) -> tuple[list[Any], BaseTask]:
 
     task_instance = initialize_task(experiment, initialize_model(experiment, num_workers))
 
@@ -205,10 +204,10 @@ if __name__ == "__main__":
         help="Overwrite existing output files (default: skip existing files)"
     )
     parser.add_argument(
-        "--lightlight",
+        "--core",
         action="store_true",
         default=False,
-        help="Overwrite existing output files (default: skip existing files)"
+        help="Light lightweight, core generation only, no progress bar, existing file checking, etc.)"
     )
     args = parser.parse_args()
 
@@ -268,7 +267,7 @@ if __name__ == "__main__":
         print(f"\n[Model {i}/{len(models)}] {model}")
         model_basename = model.replace("/", "_")
 
-        if args.lightlight:
+        if args.core:
             results = run_core_generation(
                 task=Task.STATE_NAME, num_responses=40, model_name=model, method=method, temperature=0.7, top_p=1.0,
                 num_workers=16 if any(x in model_basename for x in ["claude", "gemini"]) else 32,
@@ -281,8 +280,6 @@ if __name__ == "__main__":
                                 top_p=1.0, output_dir="generation_results", num_workers=16 if any(
                     x in model_basename for x in ["claude", "gemini"]) else 32,
                                 custom_prompts=custom_prompts, clobber=args.clobber)
-
-
 
     print(f"\n{'='*60}")
     print(f"🎉 All generation runs complete!")
