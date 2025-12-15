@@ -348,7 +348,7 @@ class PromptFactory:
         """
         return [user_prompts]
 
-    @staticmethod
+    @staticmethodr
     def get_amc_and_aime_math_task_prompts(num_icl_example: int, random_seed: int) -> List[str]:
         """Get prompts for the AMC and AIME math task."""
         user_prompt = """Generate a math competition problem in the style of AMC 10, AMC 12, or AIME.
@@ -417,6 +417,9 @@ Difficulty:
                 - A list of system and user messages (for chat models)
                 - A string prompt (for base models)
         """
+        # Get package root directory for resolving data paths
+        package_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
         # If custom prompts are provided, use them directly
         if custom_prompts is not None and len(custom_prompts) > 0:
             prompts = list(custom_prompts)
@@ -437,11 +440,11 @@ Difficulty:
         elif (
             not custom_prompts and (task == "poem") and (method == Method.DIRECT_BASE)
         ):  # Handle poem task with clean data
-            prompt_path = "data/poem_titles.txt"
+            prompt_path = os.path.join(package_dir, "data/poem_titles.txt")
         # elif task == "safety":
-        #     prompt_path = "data/safety"
+        #     prompt_path = os.path.join(package_dir, "data/safety")
         elif not custom_prompts:
-            prompt_path = f"data/{task}.txt"
+            prompt_path = os.path.join(package_dir, f"data/{task}.txt")
 
         # Only try to read from file if we don't have prompts from the special task methods
         if not prompts and not custom_prompts:
