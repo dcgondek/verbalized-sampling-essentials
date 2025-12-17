@@ -15,7 +15,7 @@ class LightweightExperimentConfig:
     temperature: float = 0.7
     top_p: float = 0.9
     min_p: float = 0.0
-    num_responses: int = 10
+    num_responses: int = 10 # num desired responses
     num_samples: int = 3
     num_prompts: int = 1
     num_samples_per_prompt: int = 5
