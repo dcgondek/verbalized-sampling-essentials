@@ -2,7 +2,9 @@
 # Generation-only script following the same pattern as scripts/tasks/run_state_name.py
 # FAST VERSION: Bypasses Pipeline to avoid heavy imports (torch, transformers, etc.)
 import argparse
+import json
 import math
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -16,6 +18,24 @@ from verbalized_sampling.methods import Method
 from verbalized_sampling.tasks import Task, get_task, BaseTask
 
 console = Console()
+
+
+def save_experiment_config(config: LightweightExperimentConfig, output_path: Path) -> None:
+    """Save experiment configuration to JSON file.
+
+    Args:
+        config: LightweightExperimentConfig to save
+        output_path: Path to save the JSON file
+    """
+    # Convert dataclass to dict
+    config_dict = asdict(config)
+
+    # Convert enum values to strings for JSON serialization
+    config_dict["task"] = config_dict["task"].value if hasattr(config_dict["task"], "value") else config_dict["task"]
+    config_dict["method"] = config_dict["method"].value if hasattr(config_dict["method"], "value") else config_dict["method"]
+
+    with open(output_path, 'w') as f:
+        json.dump(config_dict, f, indent=2)
 
 
 def run_core_generation(
@@ -111,6 +131,9 @@ def run_generation_test(
         task_instance.save_results(results, output_file)
         generation_results[experiment.name] = output_file
 
+        # Save experiment config alongside generation results
+        config_file = exp_dir / "experiment_config.json"
+        save_experiment_config(experiment, config_file)
 
         console.print(f"✅ {experiment.name}: {len(results)} responses saved")
 
