@@ -1,6 +1,8 @@
 # minimal_generation.py
 # Generation-only script following the same pattern as scripts/tasks/run_state_name.py
 import argparse
+import json
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -58,6 +60,24 @@ def create_method_experiments(
     return experiments
 
 
+def save_experiment_config(config: ExperimentConfig, output_path: Path) -> None:
+    """Save experiment configuration to JSON file.
+
+    Args:
+        config: ExperimentConfig to save
+        output_path: Path to save the JSON file
+    """
+    # Convert dataclass to dict
+    config_dict = asdict(config)
+
+    # Convert enum values to strings for JSON serialization
+    config_dict["task"] = config_dict["task"].value if hasattr(config_dict["task"], "value") else config_dict["task"]
+    config_dict["method"] = config_dict["method"].value if hasattr(config_dict["method"], "value") else config_dict["method"]
+
+    with open(output_path, 'w') as f:
+        json.dump(config_dict, f, indent=2)
+
+
 def run_generation_tests(
     task: Task,
     model_name: str,
@@ -112,6 +132,13 @@ def run_generation_tests(
 
     print(f"\n✅ Generation complete! Results saved to:")
     print(f"   {output_path}/generation/\n")
+
+    # Save experiment configs alongside generation results
+    print("💾 Saving experiment configurations...")
+    for exp in experiments:
+        exp_dir = output_path / "generation" / exp.name
+        config_file = exp_dir / "experiment_config.json"
+        save_experiment_config(exp, config_file)
 
     return generation_results
 
