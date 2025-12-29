@@ -58,7 +58,7 @@ def run_core_generation(
         custom_prompts=custom_prompts
     )
     results, task_instance = run_task(experiment, num_workers)
-    return results
+    return results, task_instance.get_prompt()
 
 def run_generation_test(
     task: Task,
