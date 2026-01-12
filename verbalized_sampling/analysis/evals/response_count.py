@@ -126,7 +126,7 @@ class ResponseCountEvaluator(BaseEvaluator):
         for response, count in response_distribution.items():
             for gt_response in gt_responses:
                 gt_response_clean = [fmt.lower().rstrip().rstrip(".") for fmt in gt_response]
-                gt_first_ans = gt_response_clean[0]
+                gt_first_ans = gt_response_clean[0] # this is grabbing the "canonical variant"
                 if response in gt_response_clean:
                     regrouped_distribution[gt_first_ans] += count
 
