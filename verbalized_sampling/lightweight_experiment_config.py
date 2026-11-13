@@ -12,8 +12,8 @@ class LightweightExperimentConfig:
     task: Task
     method: Method
     model_name: str
-    temperature: float = 0.7
-    top_p: float = 0.9
+    temperature: Optional[float] = 0.7  # None = omitted from the model call
+    top_p: Optional[float] = 0.9  # None = omitted from the model call
     min_p: float = 0.0
     num_responses: int = 10 # num desired responses
     num_samples: int = 3

@@ -6,7 +6,7 @@ import json
 import math
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn, TaskID
@@ -43,8 +43,8 @@ def run_core_generation(
         num_responses: int,
         model_name: str,
         method: Dict[str, Any],
-        temperature: float,
-        top_p: float,
+        temperature: Optional[float] = None,  # None = omitted from the model call (see initialize_model)
+        top_p: Optional[float] = None,  # None = omitted from the model call (see initialize_model)
         num_workers: int = 16,
         custom_prompts: List[str] = None,
     ):
@@ -173,6 +173,8 @@ def initialize_model(experiment: LightweightExperimentConfig, num_workers: int) 
 
     if experiment.use_vllm:
         model_config["min_p"] = experiment.min_p
+
+    model_config = {name: value for name, value in model_config.items() if value is not None}
 
     return get_model(
         model_name=experiment.model_name,
